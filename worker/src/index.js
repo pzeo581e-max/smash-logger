@@ -100,7 +100,13 @@ export default {
       const icons = {};
       const noIcon = [];
       for (const p of f.results || []) {
-        if (iconUrl(p.icon)) icons[p.id] = 1; else noIcon.push(p.properties?.['ファイター']?.title?.[0]?.plain_text || p.id);
+        const ic = p.icon;
+        // カスタム絵文字 / 外部リンクのURLは期限なし → そのまま渡す
+        // アップロード画像は5分で失効 → '@' を返してブラウザに /icon 経由で取りに来させる
+        if (ic?.type === 'custom_emoji' && ic.custom_emoji?.url) icons[p.id] = ic.custom_emoji.url;
+        else if (ic?.type === 'external' && ic.external?.url) icons[p.id] = ic.external.url;
+        else if (ic?.type === 'file') icons[p.id] = '@';
+        else noIcon.push(p.properties?.['ファイター']?.title?.[0]?.plain_text || p.id);
       }
       const counts = {};
       for (const p of m.results || []) {

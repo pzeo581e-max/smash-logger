@@ -279,8 +279,9 @@ function addLog(id,line){const el=$('#'+id);if(el.textContent==='まだありま
   el.insertAdjacentHTML('afterbegin',line+'<br>');}
 
 function iconSrc(id){
-  const b=base(); if(!b) return '';
-  return b+'/icon?id='+id;
+  const v=icons[id];
+  if(typeof v==='string'&&/^https?:/i.test(v)) return v;   // カスタム絵文字・外部リンク（期限なし）
+  const b=base(); return b? b+'/icon?id='+id : '';         // アップロード画像はWorker経由
 }
 
 /* ---------- 通信 ---------- */
