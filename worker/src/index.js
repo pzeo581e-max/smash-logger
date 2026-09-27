@@ -3,10 +3,12 @@
  * ブラウザ(GitHub Pages) → このWorker → Notion API
  * Notionトークンはここ（Secret）にだけ置く。ブラウザには出さない。
  *
- * POST /log   … 対戦 or メモを追加
- * GET  /meta  … アイコンを持つファイターの一覧＋直近100戦の使用回数を返す
- * GET  /icon?id=<pageId> … アイコン画像を中継して返す（Notionの署名URLは5分で切れるため）
- *                           画像を返すだけなので合言葉は不要（書き込みは一切できない）
+ * POST /log   … 対戦 / メモ / レート を追加・更新
+ * GET  /meta  … アイコンを持つファイターの一覧＋直近100戦の使用回数
+ * GET  /icon?id=<pageId> … アイコン画像を中継（Notionの署名URLは5分で切れるため）
+ *                          画像を返すだけなので合言葉は不要
+ * GET  /history?limit=100 … 対戦履歴とメモ履歴（端末をまたいで分析するため）
+ * GET  /rate?season=第26期 … 期別レートの現在値
  */
 
 const V = '2022-06-28';
@@ -14,8 +16,9 @@ const DB = {
   match:   '',  // env.MATCH_DB_ID
   memo:    '',  // env.MEMO_DB_ID
   fighter: '97ca75a8-74d9-4a3e-bf87-bae775e9db14', // 👤 ファイター（スマブラSP）
+  rate:    'db5c5dfe-b9f0-4389-89b6-49fe4e653c56', // 📈 スマメイト 期別レート
 };
-const RECENT = 100; // 使用率を数える直近の対戦数
+const RECENT = 100;
 
 function iconUrl(ic) {
   if (!ic) return null;
@@ -29,6 +32,7 @@ function withCors(res, cors) {
   for (const [k, v] of Object.entries(cors)) r.headers.set(k, v);
   return r;
 }
+const txt = p => p?.title?.[0]?.plain_text ?? p?.rich_text?.[0]?.plain_text ?? '';
 
 export default {
   async fetch(request, env) {
@@ -52,8 +56,9 @@ export default {
       if (env.APP_TOKEN && request.headers.get('X-App-Token') !== env.APP_TOKEN)
         return json({ error: 'unauthorized' }, 401);
     }
-    const notion = (url, body) => fetch('https://api.notion.com/v1' + url, {
-      method: body ? 'POST' : 'GET',
+
+    const call = (method, url, body) => fetch('https://api.notion.com/v1' + url, {
+      method,
       headers: {
         Authorization: `Bearer ${env.NOTION_TOKEN}`,
         'Notion-Version': V,
@@ -61,10 +66,13 @@ export default {
       },
       body: body ? JSON.stringify(body) : undefined,
     }).then(r => r.json());
+    const notion = (url, body) => call(body ? 'POST' : 'GET', url, body);
+    const patch  = (url, body) => call('PATCH', url, body);
 
-    const matchDb   = env.MATCH_DB_ID || DB.match;
-    const memoDb    = env.MEMO_DB_ID  || DB.memo;
+    const matchDb   = env.MATCH_DB_ID   || DB.match;
+    const memoDb    = env.MEMO_DB_ID    || DB.memo;
     const fighterDb = env.FIGHTER_DB_ID || DB.fighter;
+    const rateDb    = env.RATE_DB_ID    || DB.rate;
 
     /* ---------- GET /icon ---------- */
     if (request.method === 'GET' && path.endsWith('/icon')) {
@@ -97,30 +105,91 @@ export default {
           sorts: [{ timestamp: 'created_time', direction: 'descending' }],
         }),
       ]);
-      const icons = {};
-      const noIcon = [];
+      const icons = {}, noIcon = [];
       for (const p of f.results || []) {
         const ic = p.icon;
-        // カスタム絵文字 / 外部リンクのURLは期限なし → そのまま渡す
+        // カスタム絵文字・外部リンクは期限なし → URLをそのまま渡す
         // アップロード画像は5分で失効 → '@' を返してブラウザに /icon 経由で取りに来させる
         if (ic?.type === 'custom_emoji' && ic.custom_emoji?.url) icons[p.id] = ic.custom_emoji.url;
         else if (ic?.type === 'external' && ic.external?.url) icons[p.id] = ic.external.url;
         else if (ic?.type === 'file') icons[p.id] = '@';
-        else noIcon.push(p.properties?.['ファイター']?.title?.[0]?.plain_text || p.id);
+        else noIcon.push(txt(p.properties?.['ファイター']) || p.id);
       }
       const counts = {};
-      for (const p of m.results || []) {
+      for (const p of m.results || [])
         for (const r of p.properties?.['自分']?.relation || []) counts[r.id] = (counts[r.id] || 0) + 1;
-      }
       return json({ icons, counts, sampled: (m.results || []).length,
                     fighters: (f.results || []).length, noIcon });
     }
 
+    /* ---------- GET /history ---------- */
+    if (request.method === 'GET' && path.endsWith('/history')) {
+      const limit = Math.min(Math.max(+u.searchParams.get('limit') || 100, 1), 100);
+      const [m, n] = await Promise.all([
+        notion(`/databases/${matchDb}/query`, { page_size: limit,
+          sorts: [{ timestamp: 'created_time', direction: 'descending' }] }),
+        notion(`/databases/${memoDb}/query`, { page_size: 40,
+          sorts: [{ timestamp: 'created_time', direction: 'descending' }] }),
+      ]);
+      return json({
+        matches: (m.results || []).map(p => ({
+          url: p.url, at: p.created_time,
+          result: p.properties?.['勝敗']?.select?.name || null,
+          me: p.properties?.['自分']?.relation?.[0]?.id || null,
+          vs: p.properties?.['相手']?.relation?.[0]?.id || null,
+          memo: txt(p.properties?.['メモ']),
+        })),
+        memos: (n.results || []).map(p => ({
+          url: p.url, at: p.created_time,
+          date: p.properties?.['日付']?.date?.start || null,
+          tags: (p.properties?.['タグ']?.multi_select || []).map(t => t.name),
+          memo: txt(p.properties?.['メモ']),
+        })),
+      });
+    }
+
+    /* ---------- GET /rate ---------- */
+    if (request.method === 'GET' && path.endsWith('/rate')) {
+      const season = u.searchParams.get('season') || '';
+      const q = await notion(`/databases/${rateDb}/query`, season
+        ? { page_size: 1, filter: { property: '期', title: { equals: season } } }
+        : { page_size: 20, sorts: [{ timestamp: 'created_time', direction: 'descending' }] });
+      return json({ rows: (q.results || []).map(p => ({
+        url: p.url,
+        season: txt(p.properties?.['期']),
+        last: p.properties?.['最終レート']?.number ?? null,
+        best: p.properties?.['最高レート']?.number ?? null,
+        record: txt(p.properties?.['戦績']),
+      })) });
+    }
+
     /* ---------- POST /log ---------- */
     if (request.method !== 'POST') return json({ error: 'POST only' }, 405);
-
     let b;
     try { b = await request.json(); } catch { return json({ error: 'bad json' }, 400); }
+
+    /* レート更新（期別レートDBを1期1行でupsert） */
+    if (b.type === 'rate') {
+      const season = (b.season || '').trim();
+      if (!season) return json({ error: '期を入力してください' }, 400);
+      if (typeof b.rate !== 'number' || !isFinite(b.rate)) return json({ error: 'レートを数値で入力してください' }, 400);
+      const q = await notion(`/databases/${rateDb}/query`,
+        { page_size: 1, filter: { property: '期', title: { equals: season } } });
+      const row = (q.results || [])[0];
+      const prevBest = row?.properties?.['最高レート']?.number;
+      const best = prevBest == null ? b.rate : Math.max(prevBest, b.rate);
+      const props = {
+        '最終レート': { number: b.rate },
+        '最高レート': { number: best },
+        ...(b.record ? { '戦績': { rich_text: [{ text: { content: String(b.record).slice(0, 200) } }] } } : {}),
+      };
+      const res = row
+        ? await patch(`/pages/${row.id}`, { properties: props })
+        : await notion('/pages', { parent: { database_id: rateDb },
+            properties: { '期': { title: [{ text: { content: season } }] }, ...props } });
+      if (res.object === 'error') return json({ error: res.message || 'notion error' }, 400);
+      return json({ ok: true, url: res.url, last: b.rate, best, created: !row });
+    }
 
     let payload;
     if (b.type === 'match') {
@@ -134,10 +203,8 @@ export default {
           '自分': { relation: [{ id: b.meId }] },
           '相手': { relation: [{ id: b.vsId }] },
         },
-        children: memo.includes('\n') ? [{
-          object: 'block', type: 'paragraph',
-          paragraph: { rich_text: [{ text: { content: memo.slice(0, 1900) } }] },
-        }] : undefined,
+        children: memo.includes('\n') ? [{ object: 'block', type: 'paragraph',
+          paragraph: { rich_text: [{ text: { content: memo.slice(0, 1900) } }] } }] : undefined,
       };
     } else if (b.type === 'memo') {
       const memo = (b.memo || '').trim();
@@ -149,10 +216,8 @@ export default {
           '日付': { date: { start: b.date || new Date().toISOString().slice(0, 10) } },
           ...(b.tags?.length ? { 'タグ': { multi_select: b.tags.slice(0, 10).map(name => ({ name })) } } : {}),
         },
-        children: memo.includes('\n') ? [{
-          object: 'block', type: 'paragraph',
-          paragraph: { rich_text: [{ text: { content: memo.slice(0, 1900) } }] },
-        }] : undefined,
+        children: memo.includes('\n') ? [{ object: 'block', type: 'paragraph',
+          paragraph: { rich_text: [{ text: { content: memo.slice(0, 1900) } }] } }] : undefined,
       };
     } else {
       return json({ error: 'unknown type' }, 400);
@@ -160,6 +225,12 @@ export default {
 
     const data = await notion('/pages', payload);
     if (data.object === 'error') return json({ error: data.message || 'notion error' }, 400);
-    return json({ ok: true, url: data.url });
+    // Notionは存在しないページIDのリレーションを黙って捨てるので、入ったか確認して返す
+    const warn = [];
+    if (b.type === 'match') {
+      if (!data.properties?.['自分']?.relation?.length) warn.push('「自分」が登録されませんでした（キャラのIDが古い可能性）');
+      if (!data.properties?.['相手']?.relation?.length) warn.push('「相手」が登録されませんでした（キャラのIDが古い可能性）');
+    }
+    return json({ ok: true, url: data.url, warn });
   },
 };

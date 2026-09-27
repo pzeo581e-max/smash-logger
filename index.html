@@ -5,36 +5,37 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>スマブラ 記録</title>
 <style>
-  :root{
-    --bg:#191919; --panel:#252525; --panel2:#2f2f2f; --line:#3a3a3a;
-    --tx:#eaeaea; --tx2:#9b9b9b; --accent:#2383e2; --win:#2f9e63; --lose:#d4453f;
-    --cols:8; --iw:34px;
-  }
+  :root{--bg:#191919;--panel:#252525;--panel2:#2f2f2f;--line:#3a3a3a;
+    --tx:#eaeaea;--tx2:#9b9b9b;--tx3:#7a7a7a;--accent:#2383e2;--win:#2f9e63;--lose:#d4453f;
+    --cols:8;--iw:34px}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
   body{background:var(--bg);color:var(--tx);overflow:hidden;
     font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
     font-size:15px;-webkit-text-size-adjust:100%;display:flex;flex-direction:column}
-  header{flex:0 0 auto;border-bottom:1px solid var(--line);padding:8px 12px;
-    display:flex;align-items:center;gap:8px}
-  header h1{font-size:14px;margin:0;font-weight:600;flex:1;white-space:nowrap}
+  header{flex:0 0 auto;border-bottom:1px solid var(--line);padding:7px 12px;display:flex;align-items:center;gap:8px}
   .tabs{display:flex;gap:3px;background:var(--panel);border-radius:8px;padding:3px}
-  .tabs button{background:none;border:0;color:var(--tx2);padding:5px 13px;border-radius:6px;font-size:13px;cursor:pointer}
+  .tabs button{background:none;border:0;color:var(--tx2);padding:5px 14px;border-radius:6px;font-size:13px;cursor:pointer}
   .tabs button.on{background:var(--panel2);color:var(--tx)}
-  .ib{background:none;border:0;color:var(--tx2);font-size:17px;cursor:pointer;padding:3px 7px;border-radius:6px}
+  .tabs button small{opacity:.55;font-size:9.5px;margin-left:3px}
+  .spacer{flex:1 1 auto}
+  .ib{background:none;border:0;color:var(--tx2);font-size:17px;cursor:pointer;padding:3px 8px;border-radius:6px}
   .ib:hover,.ib.on{background:var(--panel2);color:var(--tx)}
+  .badge{font-size:10.5px;color:#9ad1ff;background:#1b3448;padding:3px 8px;border-radius:99px;border:1px solid #2b4d6b}
 
   .wrap{flex:1 1 auto;min-height:0;display:grid;gap:10px;padding:10px;grid-template-columns:1fr;
     overflow-y:auto;-webkit-overflow-scrolling:touch}
   .col{min-width:0;min-height:0;display:flex;flex-direction:column;gap:10px}
+  .col.scroll{overflow-y:auto}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px;
-    display:flex;flex-direction:column;min-height:0}
+    display:flex;flex-direction:column;min-height:0;flex:0 0 auto}
   .card.grow{flex:1 1 auto}
   .lbl{font-size:11.5px;color:var(--tx2);margin-bottom:7px;display:flex;align-items:center;gap:8px;flex:0 0 auto}
   .lbl .pick{color:var(--accent);font-weight:700;font-size:12.5px}
-  .hint{font-size:10.5px;color:#7a7a7a;margin-left:auto}
+  .note{font-size:11.5px;color:var(--tx2);line-height:1.65}
+  .hint{font-size:10.5px;color:var(--tx3);margin-left:auto}
+  .h2{font-size:12px;color:var(--tx2);font-weight:700;margin:0 0 8px}
 
-  /* 列数はキャラ名の表示に関係なく固定＝位置が変わらない */
   .grid{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr));gap:4px;
     overflow-y:auto;align-content:start;min-height:0}
   .tile{background:var(--panel2);border:1.5px solid transparent;border-radius:7px;padding:4px 2px;
@@ -42,61 +43,81 @@
     cursor:pointer;color:var(--tx);text-align:center;line-height:1.1;overflow:hidden}
   .tile img{width:var(--iw);height:var(--iw);object-fit:contain;display:block;pointer-events:none;flex:0 0 auto}
   .tile .nm{font-size:9.5px;color:var(--tx2);width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .tile.noicon{justify-content:center}
+  .tile.noicon{justify-content:center;min-height:calc(var(--iw) + 20px)}
   .tile.noicon .nm{font-size:10.5px;color:var(--tx);white-space:normal;line-height:1.2}
-  .tile.noicon{min-height:calc(var(--iw) + 20px)}
   .tile.sel{border-color:var(--accent);background:#1f3b57}
   .tile.sel .nm{color:var(--tx)}
   body.noname .tile:not(.noicon) .nm{display:none}
 
-  .favs{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:9px;flex:0 0 auto}
+  .favs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-bottom:9px;flex:0 0 auto}
   .favs .tile{background:#31373e;border-radius:9px;padding:6px 3px}
-  .favs .tile img{width:calc(var(--iw) + 12px);height:calc(var(--iw) + 12px)}
+  .favs .tile img{width:min(calc(var(--iw) + 8px),56px);height:min(calc(var(--iw) + 8px),56px)}
   .favs .tile .nm{font-size:10.5px;display:block !important;color:var(--tx)}
   .favs .cnt{font-size:9px;color:var(--tx2)}
 
-  input[type=text],input[type=date],input[type=url],input[type=password],select,textarea{
-    width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:8px;
-    color:var(--tx);padding:9px;font-size:15px;font-family:inherit}
+  input,select,textarea{width:100%;background:var(--panel2);border:1px solid var(--line);
+    border-radius:8px;color:var(--tx);padding:9px;font-size:15px;font-family:inherit}
   textarea{resize:vertical;line-height:1.5}
-  #match-memo{min-height:74px;font-size:15px}
+  #match-memo{height:96px;min-height:54px}
   #memo-text{flex:1 1 auto;min-height:220px;font-size:16px;line-height:1.7}
   .search{padding:5px 9px !important;font-size:12.5px !important;width:96px !important;margin:0 0 0 auto}
 
   .wl{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .wl button{padding:16px;border-radius:10px;border:1.5px solid var(--line);background:var(--panel2);
-    color:var(--tx);font-size:17px;font-weight:700;cursor:pointer}
+  .wl button{padding:15px;border-radius:10px;border:1.5px solid var(--line);background:var(--panel2);
+    color:var(--tx);font-size:17px;font-weight:700;cursor:pointer;width:auto}
   .wl button.w.on{background:var(--win);border-color:var(--win)}
   .wl button.l.on{background:var(--lose);border-color:var(--lose)}
-  .big{width:100%;padding:20px;border:0;border-radius:12px;background:var(--accent);
-    color:#fff;font-size:17px;font-weight:800;cursor:pointer;line-height:1.35}
+  .big{width:100%;padding:19px;border:0;border-radius:12px;background:var(--accent);
+    color:#fff;font-size:17px;font-weight:800;cursor:pointer;line-height:1.35;flex:0 0 auto}
   .big:disabled{opacity:.35}
-  .sendbar{flex:0 0 auto;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
-    border-top:1px solid var(--line)}
-  .log{font-size:11px;color:var(--tx2);line-height:1.6;overflow-y:auto;max-height:104px;min-height:0}
   .sub{background:none;border:1px solid var(--line);color:var(--tx2);border-radius:8px;
-    padding:9px;font-size:13px;cursor:pointer;width:100%}
+    padding:9px;font-size:13px;cursor:pointer;width:100%;text-align:center;text-decoration:none;display:block}
   .sub:hover{color:var(--tx);border-color:#555}
-  .row{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:13.5px}
-  .row .k{flex:1 1 auto;color:var(--tx)}
-  .row .v{flex:0 0 auto;width:150px}
+  .sendbar{flex:0 0 auto;padding:10px 12px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+
+  .rz{resize:vertical;overflow:auto;background:#212121;border:1px solid var(--line);border-radius:8px;
+    padding:8px;font-size:11.5px;color:var(--tx2);line-height:1.7;height:110px;min-height:44px}
+  .rz .w{color:#63c98d}.rz .l{color:#e9736e}
+
+  .row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:9px 0}
   .row + .row{border-top:1px solid #303030}
-  .sw{width:44px;height:25px;border-radius:99px;background:#444;border:0;position:relative;cursor:pointer;flex:0 0 auto}
+  .row .k{min-width:0;font-size:13.5px;line-height:1.45}
+  .row .v{width:140px}
+  .row .v.auto{width:auto}
+  .sw{width:44px;height:25px;border-radius:99px;background:#444;border:0;position:relative;cursor:pointer;padding:0}
   .sw::after{content:"";position:absolute;top:3px;left:3px;width:19px;height:19px;border-radius:99px;background:#ccc;transition:.15s}
   .sw.on{background:var(--accent)}
   .sw.on::after{left:22px;background:#fff}
-  .h2{font-size:12px;color:var(--tx2);font-weight:700;margin:4px 0 2px}
+  kbd{background:#333;border:1px solid #484848;border-bottom-width:2px;border-radius:5px;
+    padding:1px 6px;font-size:11px;font-family:inherit;color:var(--tx)}
+
+  .kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:8px}
+  .kpi div{background:var(--panel2);border-radius:9px;padding:9px 8px;text-align:center}
+  .kpi .n{font-size:21px;font-weight:800;line-height:1.15}
+  .kpi .t{font-size:10px;color:var(--tx2);margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{text-align:left;color:var(--tx2);font-weight:600;font-size:10.5px;padding:4px 5px;position:sticky;top:0;background:var(--panel)}
+  td{padding:4px 5px;border-top:1px solid #2e2e2e;vertical-align:middle}
+  td.r{text-align:right;white-space:nowrap}
+  .bar{height:6px;border-radius:99px;background:#3a3a3a;overflow:hidden;min-width:44px}
+  .bar i{display:block;height:100%;background:var(--win)}
+  .ic{width:20px;height:20px;object-fit:contain;vertical-align:middle;margin-right:5px}
+  .tbl{overflow-y:auto;min-height:0}
+  .links{display:flex;gap:6px;flex-wrap:wrap}
+  .links a{width:auto;padding:7px 11px;font-size:12px}
+
   .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:90px;background:#111;
-    border:1px solid var(--line);padding:11px 18px;border-radius:999px;font-size:13px;
-    opacity:0;transition:.2s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
+    border:1px solid var(--line);padding:11px 18px;border-radius:999px;font-size:13px;opacity:0;
+    transition:.2s;pointer-events:none;z-index:30;max-width:90vw;text-align:center;white-space:pre-line}
   .toast.show{opacity:1}
   .hide{display:none !important}
   a{color:var(--accent)}
 
   @media (min-width:1000px){
-    .wrap{overflow:hidden;padding:12px;gap:12px;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 330px}
-    .wrap.memo{grid-template-columns:minmax(0,1fr) 330px}
-    .wrap.cfg{grid-template-columns:minmax(0,760px)}
+    .wrap{overflow:hidden;padding:12px;gap:12px;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 340px}
+    .wrap.memo{grid-template-columns:minmax(0,1fr) 340px}
+    .wrap.hist{grid-template-columns:minmax(0,1fr) minmax(0,460px)}
+    .wrap.cfg{grid-template-columns:minmax(0,1fr)}
     .sendbar{display:none}
   }
   @media (max-width:999px){
@@ -104,129 +125,192 @@
     .wrap{grid-template-columns:1fr}
     .grid{max-height:42vh}
     #view-side .big{display:none}
-    .log{max-height:80px}
   }
+  #view-cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:10px;align-content:start;overflow-y:auto}
 </style>
 </head>
 <body>
 <header>
-  <h1>🎮 スマブラ 記録</h1>
   <div class="tabs">
-    <button id="tab-match" class="on">対戦</button>
-    <button id="tab-memo">メモ</button>
+    <button id="tab-match" class="on">対戦<small>1</small></button>
+    <button id="tab-memo">メモ<small>2</small></button>
+    <button id="tab-hist">履歴<small>3</small></button>
   </div>
-  <button class="ib" id="gear" title="設定">⚙</button>
+  <span class="spacer"></span>
+  <span class="hint" id="top-state" style="margin:0"></span>
+  <button class="ib" id="gear" title="設定 (4)">⚙</button>
 </header>
 
 <div class="wrap" id="wrap">
 
-  <!-- ===== 自分 ===== -->
   <section class="col" id="view-me">
     <div class="card grow">
       <div class="lbl">自分 <span class="pick" id="pick-me">未選択</span>
-        <span class="hint" id="hint-me">もう一度押すと選択解除</span>
-        <input type="text" class="search" data-for="g-me" placeholder="検索">
-      </div>
+        <span class="hint">もう一度押すと解除</span>
+        <input type="text" class="search" data-for="g-me" placeholder="検索"></div>
       <div class="favs" id="favs"></div>
       <div class="grid" id="g-me"></div>
     </div>
   </section>
 
-  <!-- ===== 相手 ===== -->
   <section class="col" id="view-vs">
     <div class="card grow">
       <div class="lbl">相手（本家の並び順） <span class="pick" id="pick-vs">未選択</span>
-        <input type="text" class="search" data-for="g-vs" placeholder="検索">
-      </div>
+        <input type="text" class="search" data-for="g-vs" placeholder="検索"></div>
       <div class="grid" id="g-vs"></div>
     </div>
   </section>
 
-  <!-- ===== 右：勝敗・メモ・送信 ===== -->
-  <aside class="col" id="view-side">
+  <aside class="col scroll" id="view-side">
+    <div class="card hide" id="card-mate">
+      <div class="h2">スマメイト <span class="hint" id="mate-best" style="font-weight:400"></span></div>
+      <div class="row" style="padding-top:0"><span class="k">期</span>
+        <input class="v" id="mate-season" placeholder="第26期"></div>
+      <div class="row"><span class="k">今のレート</span>
+        <input class="v" id="mate-rate" type="number" inputmode="numeric" placeholder="1500"></div>
+      <div class="note" id="mate-diff" style="margin:6px 0 8px"></div>
+      <button class="sub" id="mate-save">レートをNotionに記録</button>
+      <div class="kpi" id="mate-kpi" style="margin-top:9px"></div>
+      <div class="links" style="margin-top:9px">
+        <a class="sub" href="https://smashmate.net/rate" target="_blank" rel="noopener">レート対戦</a>
+        <a class="sub" href="https://smashmate.net/ranking/rating" target="_blank" rel="noopener">ランキング</a>
+        <a class="sub" href="https://smashmate.net/" target="_blank" rel="noopener">トップ</a>
+      </div>
+    </div>
     <div class="card">
-      <div class="lbl">勝敗</div>
+      <div class="lbl">勝敗 <span class="hint"><kbd>W</kbd> / <kbd>L</kbd></span></div>
       <div class="wl"><button class="w" id="btn-win">勝ち</button><button class="l" id="btn-lose">負け</button></div>
     </div>
-    <div class="card grow">
-      <div class="lbl">メモ（対戦記録のタイトルになります）</div>
+    <div class="card">
+      <div class="lbl">直近の記録 <span class="hint">下端をドラッグで伸縮</span></div>
+      <div class="rz" id="log-match">読み込み中…</div>
+    </div>
+    <div class="card">
+      <div class="lbl">メモ（対戦記録のタイトル） <span class="hint">下端をドラッグで伸縮</span></div>
       <textarea id="match-memo" placeholder="例：着地狩りされ続けた。下B多め"></textarea>
     </div>
     <button class="big" id="submit-side">送信</button>
-    <div class="card">
-      <div class="lbl">直近の送信</div>
-      <div class="log" id="log-match">まだありません</div>
-    </div>
   </aside>
 
-  <!-- ===== メモタブ ===== -->
   <section class="col hide" id="view-memo">
     <div class="card grow">
       <div class="lbl">メモ <span class="hint" id="memo-count"></span></div>
-      <textarea id="memo-text" placeholder="思いついたことをそのまま。1行目がタイトルになります。&#10;&#10;例：&#10;・崖上がりが読まれてる。ジャンプ上がりを混ぜる&#10;・ガオガエン相手は下強からの展開を待たない"></textarea>
+      <textarea id="memo-text" placeholder="思いついたことをそのまま。1行目がタイトル、2行目以降はページ本文になります。&#10;&#10;例：&#10;・崖上がりが読まれてる。ジャンプ上がりを混ぜる&#10;・ガオガエン相手は下強からの展開を待たない"></textarea>
     </div>
   </section>
-  <aside class="col hide" id="view-memo-side">
-    <div class="card">
-      <div class="lbl">日付</div>
-      <input type="date" id="memo-date">
-    </div>
-    <div class="card">
-      <div class="lbl">タグ（任意・カンマ区切り）</div>
-      <input type="text" id="memo-tags" placeholder="例：崖上がり, ガオガエン">
-    </div>
+  <aside class="col hide scroll" id="view-memo-side">
+    <div class="card"><div class="lbl">日付</div><input type="date" id="memo-date"></div>
+    <div class="card"><div class="lbl">タグ（任意・カンマ区切り）</div>
+      <input type="text" id="memo-tags" placeholder="例：崖上がり, ガオガエン"></div>
     <button class="big" id="submit-memo">メモを送信</button>
-    <div class="card grow">
-      <div class="lbl">直近の送信</div>
-      <div class="log" id="log-memo" style="max-height:none">まだありません</div>
-    </div>
+    <div class="card grow"><div class="lbl">最近のメモ</div>
+      <div class="rz" id="log-memo" style="height:220px">読み込み中…</div></div>
   </aside>
 
-  <!-- ===== 設定 ===== -->
-  <section class="col hide" id="view-cfg">
+  <section class="col hide" id="view-hist">
+    <div class="card">
+      <div class="lbl">分析
+        <select id="hist-scope" style="width:auto;padding:4px 8px;font-size:12px;margin-left:auto">
+          <option value="100">直近100戦</option><option value="50">直近50戦</option>
+          <option value="20">直近20戦</option><option value="10">直近10戦</option></select>
+        <button class="ib" id="hist-reload" title="Notionから再取得">↺</button></div>
+      <div class="kpi" id="kpi"></div>
+    </div>
+    <div class="card grow"><div class="lbl">自分のキャラ別</div><div class="tbl" id="t-me"></div></div>
+    <div class="card grow"><div class="lbl">相手キャラ別（勝率の低い順＝苦手）</div><div class="tbl" id="t-vs"></div></div>
+  </section>
+  <aside class="col hide" id="view-hist-side">
+    <div class="card grow">
+      <div class="lbl">送信履歴
+        <div class="tabs" style="margin-left:auto;padding:2px">
+          <button id="h-match" class="on" style="padding:3px 10px;font-size:12px">対戦</button>
+          <button id="h-memo" style="padding:3px 10px;font-size:12px">メモ</button></div></div>
+      <div class="tbl" id="hist-list"></div>
+    </div>
+    <div class="card"><div class="lbl">日別</div><div class="tbl" id="t-day" style="max-height:200px"></div></div>
+  </aside>
+
+  <section class="hide" id="view-cfg">
     <div class="card">
       <div class="h2">接続</div>
-      <div class="lbl" style="margin:6px 0 4px">Cloudflare Worker の URL</div>
+      <div class="note" style="margin-bottom:4px">Cloudflare Worker の URL</div>
       <input type="url" id="cfg-url" placeholder="https://smash-logger.xxxx.workers.dev">
-      <div class="lbl" style="margin:12px 0 4px">合言葉（APP_TOKEN）</div>
+      <div class="note" style="margin:10px 0 4px">合言葉（APP_TOKEN）</div>
       <input type="password" id="cfg-token" placeholder="Workerに設定したトークン">
       <div style="display:flex;gap:8px;margin-top:10px">
         <button class="sub" id="btn-test">接続テスト</button>
-        <button class="sub" id="btn-reload">アイコンと使用回数を更新</button>
-      </div>
-      <div class="lbl" id="meta-state" style="margin:10px 0 0;line-height:1.6"></div>
+        <button class="sub" id="btn-reload">アイコン等を更新</button></div>
+      <div class="note" id="meta-state" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <div class="h2">回線チェック（対戦前）</div>
+      <div class="note">Cloudflareの速度測定サービスを直接使って測ります。スマブラのラグは下り速度よりも<b>遅延</b>と<b>ゆらぎ</b>で決まります。</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="sub" id="btn-speed">測定を開始</button>
+        <a class="sub" style="flex:0 0 auto;width:auto;padding:9px 12px" href="https://speed.cloudflare.com/" target="_blank" rel="noopener">詳しく測る ↗</a></div>
+      <div class="kpi" style="margin-top:10px">
+        <div><div class="n" id="sp-ping">–</div><div class="t">遅延 ms</div></div>
+        <div><div class="n" id="sp-jit">–</div><div class="t">ゆらぎ ms</div></div>
+        <div><div class="n" id="sp-dl">–</div><div class="t">下り Mbps</div></div></div>
+      <div class="note" id="sp-note" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card">
+      <div class="h2">モード</div>
+      <div class="row" style="padding-top:0"><span class="k">スマメイトモード
+        <div class="note">対戦タブにレート記録・今日の戦績・スマメイトへのリンクを追加します。追加分の場所を作るため、アイコンを小(26px)・名前オフに自動で切り替えます（オフにすると元の設定に戻ります）</div></span>
+        <button class="sw" id="sw-mate"></button></div>
     </div>
 
     <div class="card">
       <div class="h2">表示</div>
-      <div class="row"><span class="k">キャラ名を表示<br><span style="font-size:11px;color:var(--tx2)">オフにするとアイコンだけ。並びは変わりません</span></span>
+      <div class="row"><span class="k">キャラ名を表示
+        <div class="note">オフにするとアイコンだけ。列数は固定なので並びは動きません</div></span>
         <button class="sw" id="sw-name"></button></div>
       <div class="row"><span class="k">1行に並べる数</span>
         <select class="v" id="sel-cols">
           <option value="6">6列</option><option value="7">7列</option><option value="8">8列</option>
-          <option value="9">9列</option><option value="10">10列</option><option value="12">12列</option>
-        </select></div>
+          <option value="9">9列</option><option value="10">10列</option><option value="12">12列</option></select></div>
       <div class="row"><span class="k">アイコンの大きさ</span>
         <select class="v" id="sel-size">
-          <option value="26">小</option><option value="34">中</option><option value="42">大</option><option value="52">特大</option>
-        </select></div>
-      <div class="row"><span class="k">よく使うキャラを上段に表示<br><span style="font-size:11px;color:var(--tx2)">直近の対戦から使用回数トップ5</span></span>
-        <button class="sw" id="sw-favs"></button></div>
-      <div class="row"><span class="k">送信後も自分のキャラを保持<br><span style="font-size:11px;color:var(--tx2)">連戦を素早く記録できます</span></span>
-        <button class="sw" id="sw-keep"></button></div>
+          <option value="26">小 26px</option><option value="34">中 34px</option>
+          <option value="42">大 42px</option><option value="52">特大 52px</option><option value="64">最大 64px</option></select></div>
+      <div class="row"><span class="k">よく使うキャラを上段に表示
+        <div class="note">直近の対戦から使用回数トップ5</div></span><button class="sw" id="sw-favs"></button></div>
+      <div class="row"><span class="k">送信後も自分のキャラを保持
+        <div class="note">連戦を素早く記録できます</div></span><button class="sw" id="sw-keep"></button></div>
+      <div class="note" id="fit-state" style="margin-top:10px"></div>
     </div>
 
     <div class="card">
-      <div class="h2">Notionを開く</div>
-      <div class="row"><span class="k">🎮 スマブラ ハブ</span>
-        <a class="v" href="https://www.notion.so/646d1e48e9954ef682d4116463570e7b" target="_blank">開く</a></div>
+      <div class="h2">ショートカットキー</div>
+      <div class="row" style="padding-top:0"><span class="k">タブ切り替え</span>
+        <span class="v auto"><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd><kbd>4</kbd></span></div>
+      <div class="row"><span class="k">勝ち / 負け</span><span class="v auto"><kbd>W</kbd> <kbd>L</kbd></span></div>
+      <div class="row"><span class="k">送信</span><span class="v auto"><kbd>Ctrl</kbd>+<kbd>Enter</kbd></span></div>
+      <div class="row"><span class="k">キャラ検索へ</span><span class="v auto"><kbd>/</kbd></span></div>
+      <div class="row"><span class="k">選択をすべて解除</span><span class="v auto"><kbd>Esc</kbd></span></div>
+      <div class="note" style="margin-top:8px">文字入力中は <kbd>Ctrl</kbd>+<kbd>Enter</kbd> と <kbd>Esc</kbd> のみ有効です。</div>
+    </div>
+
+    <div class="card">
+      <div class="h2">Notion / 外部サイト</div>
+      <div class="row" style="padding-top:0"><span class="k">🎮 スマブラ ハブ</span>
+        <a class="v auto" href="https://www.notion.so/646d1e48e9954ef682d4116463570e7b" target="_blank" rel="noopener">開く ↗</a></div>
       <div class="row"><span class="k">🎮 スマブラ対戦記録</span>
-        <a class="v" href="https://www.notion.so/df7dde8c0b99466daefee3779f4b06a1" target="_blank">開く</a></div>
+        <a class="v auto" href="https://www.notion.so/df7dde8c0b99466daefee3779f4b06a1" target="_blank" rel="noopener">開く ↗</a></div>
       <div class="row"><span class="k">🗒 スマブラメモ</span>
-        <a class="v" href="https://www.notion.so/869c23c70b134a779e37b11b040ebab9" target="_blank">開く</a></div>
+        <a class="v auto" href="https://www.notion.so/869c23c70b134a779e37b11b040ebab9" target="_blank" rel="noopener">開く ↗</a></div>
       <div class="row"><span class="k">👤 ファイター（アイコン設定）</span>
-        <a class="v" href="https://www.notion.so/97ca75a874d94a3ebf87bae775e9db14" target="_blank">開く</a></div>
-      <div class="lbl" style="margin:10px 0 0" id="ver"></div>
+        <a class="v auto" href="https://www.notion.so/97ca75a874d94a3ebf87bae775e9db14" target="_blank" rel="noopener">開く ↗</a></div>
+      <div class="row"><span class="k">📈 スマメイト 期別レート</span>
+        <a class="v auto" href="https://www.notion.so/db5c5dfeb9f0438989b649fe4e653c56" target="_blank" rel="noopener">開く ↗</a></div>
+      <div class="row"><span class="k">スマメイト</span>
+        <a class="v auto" href="https://smashmate.net/" target="_blank" rel="noopener">開く ↗</a></div>
+      <div class="row"><span class="k">Ultimate Frame Data</span>
+        <a class="v auto" href="https://ultimateframedata.com/" target="_blank" rel="noopener">開く ↗</a></div>
+      <div class="note" id="ver" style="margin-top:8px"></div>
     </div>
   </section>
 </div>
@@ -241,31 +325,55 @@ const LS={get:(k,d)=>{try{const v=localStorage.getItem('sl_'+k);return v===null?
           set:(k,v)=>localStorage.setItem('sl_'+k,JSON.stringify(v))};
 const FLIST=[...window.FIGHTERS].sort((a,b)=>a.no-b.no);
 const BY_ID=Object.fromEntries(FLIST.map(f=>[f.id,f]));
+const today=()=>new Date().toLocaleDateString('sv-SE');
 let mode='match', icons=LS.get('icons',{}), counts=LS.get('counts',{});
+let HIST={matches:[],memos:[]}, histTab='match';
 let sel={me:LS.get('lastMe',null), vs:null, wl:null};
+if(sel.me && !BY_ID[sel.me.id]){ sel.me=null; LS.set('lastMe',null); }  // 統合で消えたIDを掃除
 
-/* ---------- 設定 ---------- */
-const CFG={name:['name',true],cols:['cols',null],size:['size',34],favs:['favs',true],keep:['keep',true]};
-function cfg(k){const [key,def]=CFG[k];return LS.get(key,def)}
+/* ================= 設定 ================= */
+const CFG={name:['name',true],cols:['cols',null],size:['size',34],favs:['favs',true],keep:['keep',true],mate:['mate',false]};
+const cfg=k=>LS.get(CFG[k][0],CFG[k][1]);
 function setCfg(k,v){LS.set(CFG[k][0],v);applyCfg()}
 function applyCfg(){
   document.body.classList.toggle('noname',!cfg('name'));
   const c=cfg('cols'); if(c) document.documentElement.style.setProperty('--cols',c);
   document.documentElement.style.setProperty('--iw',cfg('size')+'px');
-  $('#sw-name').classList.toggle('on',!!cfg('name'));
-  $('#sw-favs').classList.toggle('on',!!cfg('favs'));
-  $('#sw-keep').classList.toggle('on',!!cfg('keep'));
+  for(const [id,k] of [['sw-name','name'],['sw-favs','favs'],['sw-keep','keep'],['sw-mate','mate']])
+    $('#'+id).classList.toggle('on',!!cfg(k));
   $('#sel-cols').value=String(c||(innerWidth<1000?6:8));
   $('#sel-size').value=String(cfg('size'));
   $('#favs').classList.toggle('hide',!cfg('favs'));
+  $('#card-mate').classList.toggle('hide',!cfg('mate'));
+  fitState();
+}
+function fitState(){
+  const t=$('#g-vs .tile')||$('#g-me .tile'); if(!t) return;
+  const w=Math.round(t.getBoundingClientRect().width), ic=cfg('size');
+  const chars=Math.max(0,Math.floor((w-6)/9.6));
+  const longest=FLIST.reduce((a,b)=>a.name.length>=b.name.length?a:b);
+  $('#fit-state').innerHTML=
+    `いまの設定：タイル幅 <b>${w}px</b> ／ アイコン <b>${ic}px</b> ／ 名前は約 <b>${chars}文字</b>まで表示`
+    +`<br>${chars>=longest.name.length?'すべてのキャラ名が省略されずに出ています。'
+      :`長い名前（最長${longest.name.length}文字「${longest.name}」）は「…」で省略されます。`}`
+    +`<br><b>アイコンを大きくしても名前は消えません</b>（タイルが縦に伸びるだけ）。名前が省略されるのは列数を増やしたときです。`;
 }
 $('#sw-name').onclick=()=>setCfg('name',!cfg('name'));
 $('#sw-favs').onclick=()=>{setCfg('favs',!cfg('favs'));buildAll()};
 $('#sw-keep').onclick=()=>setCfg('keep',!cfg('keep'));
 $('#sel-cols').onchange=e=>setCfg('cols',+e.target.value);
 $('#sel-size').onchange=e=>setCfg('size',+e.target.value);
+$('#sw-mate').onclick=()=>{
+  const on=!cfg('mate');
+  if(on){ LS.set('preMate',{size:cfg('size'),name:cfg('name')});
+          LS.set('size',26); LS.set('name',false); }
+  else { const p=LS.get('preMate',null); if(p){LS.set('size',p.size);LS.set('name',p.name)} }
+  setCfg('mate',on); if(on) loadRate(); renderMate();
+  toast(on?'スマメイトモード ON':'スマメイトモード OFF');
+};
+addEventListener('resize',fitState);
 
-/* ---------- タイル ---------- */
+/* ================= タイル ================= */
 function iconSrc(id){
   const v=icons[id];
   if(typeof v==='string'&&/^https?:/i.test(v)) return v;
@@ -276,82 +384,78 @@ function tileEl(f,key,big){
   b.className='tile'+(icons[f.id]?'':' noicon');
   b.dataset.id=f.id; b.dataset.name=f.name; b.title=f.no+'. '+f.name;
   b.innerHTML=(icons[f.id]?`<img src="${iconSrc(f.id)}" alt="" loading="lazy" onerror="this.parentNode.classList.add('noicon');this.remove()">`:'')
-    +`<span class="nm">${f.name}</span>`
-    +(big&&counts[f.id]?`<span class="cnt">${counts[f.id]}戦</span>`:'');
+    +`<span class="nm">${f.name}</span>`+(big&&counts[f.id]?`<span class="cnt">${counts[f.id]}戦</span>`:'');
   b.onclick=()=>pick(key,f);
   return b;
 }
 function paintSel(key){
-  const wrapSel=key==='me'?['#g-me','#favs']:['#g-vs'];
-  wrapSel.forEach(s=>$$(s+' .tile').forEach(t=>t.classList.toggle('sel',!!sel[key]&&t.dataset.id===sel[key].id)));
+  (key==='me'?['#g-me','#favs']:['#g-vs']).forEach(s=>
+    $$(s+' .tile').forEach(t=>t.classList.toggle('sel',!!sel[key]&&t.dataset.id===sel[key].id)));
   $(key==='me'?'#pick-me':'#pick-vs').textContent=sel[key]?sel[key].no+'. '+sel[key].name:'未選択';
 }
 function pick(key,f){
-  sel[key]=(sel[key]&&sel[key].id===f.id)?null:f;     // 2回押すと解除
+  sel[key]=(sel[key]&&sel[key].id===f.id)?null:f;
   if(key==='me') LS.set('lastMe',sel.me);
   paintSel(key); refresh();
 }
 function buildAll(){
-  ['me','vs'].forEach(key=>{
-    const g=$('#g-'+key); g.innerHTML='';
-    FLIST.forEach(f=>g.appendChild(tileEl(f,key,false)));
-  });
+  ['me','vs'].forEach(k=>{const g=$('#g-'+k);g.innerHTML='';FLIST.forEach(f=>g.appendChild(tileEl(f,k,false)))});
   const fv=$('#favs'); fv.innerHTML='';
   const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id])=>BY_ID[id]).filter(Boolean);
   if(top.length) top.forEach(f=>fv.appendChild(tileEl(f,'me',true)));
-  else fv.innerHTML='<div class="lbl" style="grid-column:1/-1;margin:0">⚙→「アイコンと使用回数を更新」でよく使うキャラを上段に表示します</div>';
-  paintSel('me'); paintSel('vs');
+  else fv.innerHTML='<div class="note" style="grid-column:1/-1">⚙→「アイコン等を更新」でよく使うキャラを上段に表示します</div>';
+  paintSel('me'); paintSel('vs'); fitState();
 }
 $$('.search').forEach(inp=>{inp.oninput=()=>{const q=inp.value.trim();
-  $$('#'+inp.dataset.for+' .tile').forEach(t=>{t.style.visibility=!q||t.dataset.name.includes(q)?'':'hidden'})}});
+  $$('#'+inp.dataset.for+' .tile').forEach(t=>t.style.visibility=!q||t.dataset.name.includes(q)?'':'hidden')}});
 
-/* ---------- 勝敗 ---------- */
+/* ================= 勝敗 ================= */
 $('#btn-win').onclick =()=>{sel.wl=sel.wl==='勝ち'?null:'勝ち';paintWL()};
 $('#btn-lose').onclick=()=>{sel.wl=sel.wl==='負け'?null:'負け';paintWL()};
 function paintWL(){$('#btn-win').classList.toggle('on',sel.wl==='勝ち');
   $('#btn-lose').classList.toggle('on',sel.wl==='負け');refresh()}
 
-/* ---------- タブ ---------- */
+/* ================= タブ ================= */
 function show(v){
   mode=v;
-  const m=v==='match', mm=v==='memo';
-  ['view-me','view-vs','view-side'].forEach(id=>$('#'+id).classList.toggle('hide',!m));
-  $('#view-memo').classList.toggle('hide',!mm);
-  $('#view-memo-side').classList.toggle('hide',!mm);
-  $('#view-cfg').classList.toggle('hide',v!=='cfg');
-  $('#wrap').className='wrap'+(mm?' memo':'')+(v==='cfg'?' cfg':'');
-  $('#tab-match').classList.toggle('on',m);
-  $('#tab-memo').classList.toggle('on',mm);
+  const on={match:['view-me','view-vs','view-side'],memo:['view-memo','view-memo-side'],
+            hist:['view-hist','view-hist-side'],cfg:['view-cfg']};
+  Object.values(on).flat().forEach(id=>$('#'+id).classList.add('hide'));
+  on[v].forEach(id=>$('#'+id).classList.remove('hide'));
+  if(v==='match') $('#card-mate').classList.toggle('hide',!cfg('mate'));
+  $('#wrap').className='wrap'+(v==='match'?'':' '+v);
+  ['match','memo','hist'].forEach(t=>$('#tab-'+t).classList.toggle('on',v===t));
   $('#gear').classList.toggle('on',v==='cfg');
-  $('.sendbar').classList.toggle('hide',v==='cfg');
-  refresh();
+  $('.sendbar').classList.toggle('hide',v==='hist'||v==='cfg');
+  if(v==='hist'&&!HIST.matches.length) loadHistory(true);
+  refresh(); if(v==='cfg') fitState();
 }
 $('#tab-match').onclick=()=>show('match');
 $('#tab-memo').onclick =()=>show('memo');
+$('#tab-hist').onclick =()=>show('hist');
 $('#gear').onclick=()=>show(mode==='cfg'?'match':'cfg');
 
 $('#cfg-url').value=LS.get('url','');
 $('#cfg-token').value=LS.get('token','');
 $('#cfg-url').oninput=e=>LS.set('url',e.target.value.trim());
 $('#cfg-token').oninput=e=>LS.set('token',e.target.value);
-$('#memo-date').value=new Date().toLocaleDateString('sv-SE');
+$('#memo-date').value=today();
 $('#match-memo').oninput=refresh;
 $('#memo-text').oninput=()=>{const n=$('#memo-text').value.trim();
   $('#memo-count').textContent=n?n.length+'文字':'';refresh()};
 
-/* ---------- 送信可否 ---------- */
 function refresh(){
   const okM=!!(sel.me&&sel.vs&&sel.wl), okN=!!$('#memo-text').value.trim();
   const label=sel.me&&sel.vs?`送信\n${sel.me.name} vs ${sel.vs.name}${sel.wl?'／'+sel.wl:''}`:'自分・相手・勝敗を選ぶ';
-  ['#submit','#submit-side'].forEach(s=>{const b=$(s);if(b){b.disabled=!okM;b.style.whiteSpace='pre-line';b.textContent=label}});
+  const sd=$('#submit-side'); sd.disabled=!okM; sd.style.whiteSpace='pre-line'; sd.textContent=label;
   $('#submit-memo').disabled=!okN;
-  if(mode==='memo'){const b=$('#submit');b.disabled=!okN;b.style.whiteSpace='normal';b.textContent='メモを送信';}
+  const b=$('#submit');
+  if(mode==='memo'){b.disabled=!okN;b.style.whiteSpace='normal';b.textContent='メモを送信'}
+  else{b.disabled=!okM;b.style.whiteSpace='pre-line';b.textContent=label}
 }
-function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
-function addLog(id,line){const el=$('#'+id);if(el.textContent==='まだありません')el.textContent='';
-  el.insertAdjacentHTML('afterbegin',line+'<br>')}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
 
-/* ---------- 通信 ---------- */
+/* ================= 通信 ================= */
 function base(){let u=(LS.get('url','')||'').trim();if(!u)return null;
   if(!/^https?:\/\//i.test(u))u='https://'+u;return u.replace(/\/$/,'')}
 async function api(path,body){
@@ -367,20 +471,178 @@ async function loadMeta(quiet){
   try{
     const j=await api('/meta');
     icons=j.icons||{}; counts=j.counts||{};
-    LS.set('icons',icons); LS.set('counts',counts);
-    buildAll();
+    LS.set('icons',icons); LS.set('counts',counts); buildAll();
     $('#meta-state').innerHTML=`✅ 接続OK ／ ファイター <b>${j.fighters}体</b>中 アイコンあり <b>${Object.keys(icons).length}体</b>`
-      +(j.noIcon&&j.noIcon.length?`<br>未設定：${j.noIcon.join('、')}`:'<br>全員設定済み')
+      +(j.noIcon?.length?`<br>アイコン未設定：${j.noIcon.join('、')}`:'<br>全員アイコン設定済み')
       +`<br>直近 ${j.sampled} 戦を集計`;
     if(!quiet) toast(`アイコン${Object.keys(icons).length}体を読み込みました`);
-  }catch(e){ $('#meta-state').textContent='⚠ '+e.message; if(!quiet) toast('⚠ 取得失敗：'+e.message); }
+  }catch(e){$('#meta-state').textContent='⚠ '+e.message; if(!quiet) toast('⚠ 取得失敗：'+e.message)}
 }
 $('#btn-reload').onclick=()=>loadMeta(false);
 $('#btn-test').onclick=()=>loadMeta(false);
 
-/* ---------- 送信 ---------- */
+/* ================= 履歴・分析 ================= */
+const fname=id=>BY_ID[id]?BY_ID[id].name:(id?'（削除済み）':'（未登録）');
+const icTag=id=>icons[id]?`<img class="ic" src="${iconSrc(id)}" onerror="this.remove()">`:'';
+const hhmm=s=>new Date(s).toLocaleString('ja-JP',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+async function loadHistory(quiet){
+  try{
+    HIST=await api('/history?limit=100'); renderHistory(); renderMate();
+    $('#top-state').textContent=`履歴 ${HIST.matches.length}戦`;
+    if(!quiet) toast(`Notionから ${HIST.matches.length}戦 / メモ${HIST.memos.length}件を読み込みました`);
+  }catch(e){
+    $('#log-match').textContent='⚠ '+e.message; $('#log-memo').textContent='⚠ '+e.message;
+    if(!quiet) toast('⚠ '+e.message);
+  }
+}
+$('#hist-reload').onclick=()=>loadHistory(false);
+$('#hist-scope').onchange=renderHistory;
+$('#h-match').onclick=()=>{histTab='match';renderHistory()};
+$('#h-memo').onclick =()=>{histTab='memo';renderHistory()};
+
+function renderHistory(){
+  const ms=HIST.matches, n=+$('#hist-scope').value, cut=ms.slice(0,n);
+  $('#log-match').innerHTML = ms.length
+    ? ms.slice(0,40).map(m=>`${hhmm(m.at)} ${fname(m.me)} vs ${fname(m.vs)} `
+      +`<span class="${m.result==='勝ち'?'w':'l'}">${m.result||'–'}</span>`
+      +(m.memo&&m.memo!=='（メモなし）'?' / '+m.memo:'')).join('<br>') : 'まだありません';
+  $('#log-memo').innerHTML = HIST.memos.length
+    ? HIST.memos.map(x=>`${x.date||hhmm(x.at)} ${x.memo}`
+      +(x.tags.length?' <span style="color:#7aa2c8">#'+x.tags.join(' #')+'</span>':'')).join('<br>') : 'まだありません';
+
+  const w=cut.filter(m=>m.result==='勝ち').length, l=cut.filter(m=>m.result==='負け').length;
+  let streak=0, sk=cut[0]?.result; for(const m of cut){if(m.result!==sk)break;streak++}
+  const l10=cut.slice(0,10), w10=l10.filter(m=>m.result==='勝ち').length;
+  $('#kpi').innerHTML=[[cut.length,'対戦数'],[(w+l?Math.round(w/(w+l)*100):0)+'%','勝率'],[`${w}-${l}`,'勝-敗'],
+    [sk==='勝ち'?streak+'連勝':(streak?streak+'連敗':'–'),'現在'],
+    [l10.length?Math.round(w10/l10.length*100)+'%':'–','直近10戦'],
+    [new Set(cut.map(m=>m.at.slice(0,10))).size,'日数']]
+    .map(([a,t])=>`<div><div class="n">${a}</div><div class="t">${t}</div></div>`).join('');
+
+  const agg=key=>{const m={};for(const x of cut){const id=x[key];if(!id)continue;
+      (m[id]??={w:0,l:0}); if(x.result==='勝ち')m[id].w++; else if(x.result==='負け')m[id].l++}
+    return Object.entries(m).map(([id,v])=>({id,...v,n:v.w+v.l,r:v.w+v.l?v.w/(v.w+v.l):0}))};
+  const tbl=(rows,sort)=>rows.length
+    ? '<table><tr><th>キャラ</th><th class="r">戦</th><th class="r">勝率</th><th style="width:34%">　</th></tr>'
+      +rows.sort(sort).map(r=>`<tr><td>${icTag(r.id)}${fname(r.id)}</td><td class="r">${r.n}</td>`
+      +`<td class="r">${Math.round(r.r*100)}%<span style="color:var(--tx3)"> ${r.w}-${r.l}</span></td>`
+      +`<td><div class="bar"><i style="width:${r.r*100}%"></i></div></td></tr>`).join('')+'</table>'
+    : '<div class="note">データがありません</div>';
+  $('#t-me').innerHTML=tbl(agg('me'),(a,b)=>b.n-a.n);
+  $('#t-vs').innerHTML=tbl(agg('vs'),(a,b)=>a.r-b.r||b.n-a.n);
+
+  const d={}; for(const x of cut){const k=x.at.slice(0,10);(d[k]??={w:0,l:0});
+    if(x.result==='勝ち')d[k].w++; else if(x.result==='負け')d[k].l++}
+  $('#t-day').innerHTML='<table><tr><th>日付</th><th class="r">戦</th><th class="r">勝率</th></tr>'
+    +Object.entries(d).map(([k,v])=>`<tr><td>${k}</td><td class="r">${v.w+v.l}</td>`
+    +`<td class="r">${v.w+v.l?Math.round(v.w/(v.w+v.l)*100):0}%<span style="color:var(--tx3)"> ${v.w}-${v.l}</span></td></tr>`).join('')+'</table>';
+
+  $('#h-match').classList.toggle('on',histTab==='match');
+  $('#h-memo').classList.toggle('on',histTab==='memo');
+  $('#hist-list').innerHTML = histTab==='match'
+    ? (ms.length?'<table><tr><th>日時</th><th>自分</th><th>相手</th><th>結果</th><th>メモ</th></tr>'
+      +ms.map(m=>`<tr><td style="white-space:nowrap;color:var(--tx2)">${hhmm(m.at)}</td>`
+      +`<td style="white-space:nowrap">${icTag(m.me)}${fname(m.me)}</td>`
+      +`<td style="white-space:nowrap">${icTag(m.vs)}${fname(m.vs)}</td>`
+      +`<td style="color:${m.result==='勝ち'?'#63c98d':'#e9736e'};white-space:nowrap">${m.result||'–'}</td>`
+      +`<td><a href="${m.url}" target="_blank" rel="noopener" style="color:var(--tx)">`
+      +`${m.memo==='（メモなし）'?'<span style="color:var(--tx3)">—</span>':m.memo}</a></td></tr>`).join('')+'</table>'
+      :'<div class="note">まだありません</div>')
+    : (HIST.memos.length?'<table><tr><th>日付</th><th>メモ</th><th>タグ</th></tr>'
+      +HIST.memos.map(x=>`<tr><td style="white-space:nowrap;color:var(--tx2)">${x.date||''}</td>`
+      +`<td><a href="${x.url}" target="_blank" rel="noopener" style="color:var(--tx)">${x.memo}</a></td>`
+      +`<td style="color:#7aa2c8;white-space:nowrap">${x.tags.map(t=>'#'+t).join(' ')}</td></tr>`).join('')+'</table>'
+      :'<div class="note">まだありません</div>');
+}
+
+/* ================= スマメイト ================= */
+$('#mate-season').value=LS.get('season','');
+$('#mate-season').oninput=e=>{LS.set('season',e.target.value.trim());renderMate()};
+$('#mate-rate').oninput=renderMate;
+function rateLog(){return LS.get('rateLog',[])}
+function renderMate(){
+  if(!cfg('mate')) return;
+  const season=LS.get('season',''), log=rateLog().filter(x=>x.season===season);
+  const prev=log[log.length-1]?.rate ?? null;
+  const cur=parseInt($('#mate-rate').value,10);
+  $('#mate-diff').innerHTML = prev==null ? '前回の記録はまだありません。'
+    : `前回 <b>${prev}</b>${isFinite(cur)?` → <b>${cur}</b> <span style="color:${cur-prev>=0?'#63c98d':'#e9736e'}">${cur-prev>=0?'+':''}${cur-prev}</span>`:''}`;
+  const t=today();
+  const tw=HIST.matches.filter(m=>m.at.slice(0,10)===t&&m.result==='勝ち').length;
+  const tl=HIST.matches.filter(m=>m.at.slice(0,10)===t&&m.result==='負け').length;
+  const tl0=log.filter(x=>x.t.slice(0,10)===t);
+  const dayDiff=tl0.length?(isFinite(cur)?cur:tl0[tl0.length-1].rate)-tl0[0].rate:null;
+  const best=LS.get('bestRate',{})[season];
+  $('#mate-best').textContent=best?`今期の最高 ${best}`:'';
+  $('#mate-kpi').innerHTML=[[`${tw}-${tl}`,'今日の戦績'],
+    [tw+tl?Math.round(tw/(tw+tl)*100)+'%':'–','今日の勝率'],
+    [dayDiff==null?'–':(dayDiff>=0?'+':'')+dayDiff,'今日のレート']]
+    .map(([a,x])=>`<div><div class="n">${a}</div><div class="t">${x}</div></div>`).join('');
+}
+async function loadRate(){
+  const season=LS.get('season',''); if(!season) return;
+  try{
+    const j=await api('/rate?season='+encodeURIComponent(season));
+    const r=j.rows?.[0]; if(!r) return;
+    const b=LS.get('bestRate',{}); b[season]=r.best; LS.set('bestRate',b);
+    if(!$('#mate-rate').value&&r.last!=null) $('#mate-rate').value=r.last;
+    renderMate();
+  }catch(e){}
+}
+$('#mate-save').onclick=async()=>{
+  const season=LS.get('season',''), rate=parseInt($('#mate-rate').value,10);
+  if(!season){toast('期を入力してください（例：第26期）');return}
+  if(!isFinite(rate)){toast('レートを数値で入力してください');return}
+  const wl=LS.get('mateWL',{})[season]||{w:0,l:0};
+  const btn=$('#mate-save'); btn.disabled=true; btn.textContent='記録中…';
+  try{
+    const r=await api('/log',{type:'rate',season,rate,record:`${wl.w}勝${wl.l}敗`});
+    const log=rateLog(); log.push({t:new Date().toISOString(),season,rate}); LS.set('rateLog',log.slice(-500));
+    const b=LS.get('bestRate',{}); b[season]=r.best; LS.set('bestRate',b);
+    renderMate(); toast(`✅ ${season} 最終${r.last} / 最高${r.best} を記録しました`);
+  }catch(e){toast('⚠ '+e.message)}
+  finally{btn.disabled=false;btn.textContent='レートをNotionに記録'}
+};
+
+/* ================= 回線チェック（Cloudflare公式の測定エンドポイント） ================= */
+const CF='https://speed.cloudflare.com/__down?bytes=';
+async function speedtest(){
+  $('#sp-note').textContent='測定中…';
+  try{
+    const pings=[];
+    for(let i=0;i<10;i++){const t=performance.now();
+      await fetch(CF+'1&r='+Math.random(),{cache:'no-store'}); pings.push(performance.now()-t)}
+    pings.sort((a,b)=>a-b);
+    const ping=Math.round(pings[0]), jit=Math.round(pings[8]-pings[0]);
+    $('#sp-ping').textContent=ping; $('#sp-jit').textContent=jit;
+    // 回線が速いと短時間で終わり精度が落ちるため、2秒を超えるまで段階的に大きくする
+    let mbps=0, used=0;
+    for(const bytes of [1e6,5e6,1e7,2.5e7,5e7,1e8]){
+      const t0=performance.now();
+      await (await fetch(CF+bytes+'&r='+Math.random(),{cache:'no-store'})).arrayBuffer();
+      const sec=(performance.now()-t0)/1000;
+      mbps=Math.max(mbps,(bytes*8/1e6)/sec); used=bytes;
+      if(sec>2) break;
+    }
+    $('#sp-dl').textContent=mbps.toFixed(1);
+    const judge = ping<30&&jit<15 ? '◎ 対戦に十分（遅延・ゆらぎとも良好）'
+      : ping<60&&jit<30 ? '○ おおむね快適'
+      : ping<100 ? '△ ラグを感じることがあります。有線接続を推奨'
+      : '✕ 不安定。有線接続か、時間をずらすのがおすすめ';
+    $('#sp-note').innerHTML=`${judge}<br><span style="color:var(--tx3)">`
+      +`遅延＝往復時間の最小値／ゆらぎ＝最大と最小の差。スマブラの快適さは下り速度よりこの2つで決まります。`
+      +`測定データ量 ${(used/1e6).toFixed(0)}MB・${new Date().toLocaleTimeString('ja-JP')}</span>`;
+  }catch(e){
+    $('#sp-note').innerHTML='⚠ 測定できませんでした（'+e.message+'）。'
+      +'<a href="https://speed.cloudflare.com/" target="_blank" rel="noopener">公式の測定ページ ↗</a>をお使いください。';
+  }
+}
+$('#btn-speed').onclick=speedtest;
+
+/* ================= 送信 ================= */
 async function send(){
   const memo=$('#memo-text').value.trim();
+  if(mode==='match'&&(!sel.me||!sel.vs||!sel.wl)) return;
   const body = mode==='memo'
     ? {type:'memo', memo, date:$('#memo-date').value,
        tags:$('#memo-tags').value.split(',').map(s=>s.trim()).filter(Boolean)}
@@ -389,28 +651,43 @@ async function send(){
   const old=btns.map(b=>b.textContent);
   btns.forEach(b=>{b.disabled=true;b.textContent='送信中…'});
   try{
-    await api('/log',body);
-    const now=new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
-    if(mode==='memo'){
-      addLog('log-memo',`${now} ${memo.split('\n')[0].slice(0,50)}`);
-      $('#memo-text').value=''; $('#memo-count').textContent='';
-    }else{
-      addLog('log-match',`${now} ${sel.me.name} vs ${sel.vs.name} — ${sel.wl}${body.memo?' / '+body.memo.split('\n')[0]:''}`);
+    const r=await api('/log',body);
+    if(mode==='memo'){$('#memo-text').value='';$('#memo-count').textContent=''}
+    else{
       counts[sel.me.id]=(counts[sel.me.id]||0)+1; LS.set('counts',counts);
+      if(cfg('mate')){const s=LS.get('season',''),m=LS.get('mateWL',{});
+        (m[s]??={w:0,l:0}); sel.wl==='勝ち'?m[s].w++:m[s].l++; LS.set('mateWL',m)}
       $('#match-memo').value=''; sel.wl=null;
       if(!cfg('keep')){sel.me=null;LS.set('lastMe',null);paintSel('me')}
       sel.vs=null; paintSel('vs'); paintWL();
     }
-    toast('✅ Notionに追加しました');
-  }catch(e){ toast('⚠ 失敗：'+e.message) }
-  finally{ btns.forEach((b,i)=>b.textContent=old[i]); refresh() }
+    toast(r.warn?.length?'⚠ 追加しましたが：\n'+r.warn.join('\n'):'✅ Notionに追加しました');
+    loadHistory(true);
+  }catch(e){toast('⚠ 失敗：'+e.message)}
+  finally{btns.forEach((b,i)=>b.textContent=old[i]);refresh()}
 }
 ['#submit','#submit-side','#submit-memo'].forEach(s=>{const b=$(s);if(b)b.onclick=send});
 
-/* ---------- 起動 ---------- */
+/* ================= ショートカット ================= */
+addEventListener('keydown',e=>{
+  const typing=/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName);
+  if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();send();return}
+  if(e.key==='Escape'){sel.me=cfg('keep')?sel.me:null;sel.vs=null;sel.wl=null;
+    LS.set('lastMe',sel.me);paintSel('me');paintSel('vs');paintWL();
+    if(typing)e.target.blur(); return}
+  if(typing||e.ctrlKey||e.metaKey||e.altKey) return;
+  const k=e.key.toLowerCase();
+  if(k==='1')show('match'); else if(k==='2')show('memo');
+  else if(k==='3')show('hist'); else if(k==='4')show('cfg');
+  else if(k==='w'&&mode==='match')$('#btn-win').click();
+  else if(k==='l'&&mode==='match')$('#btn-lose').click();
+  else if(k==='/'){e.preventDefault();($('#view-me').classList.contains('hide')?$('.search'):$('#view-me .search')).focus()}
+});
+
+/* ================= 起動 ================= */
 $('#ver').textContent=`ファイター ${FLIST.length} 体を表示中`;
-applyCfg(); buildAll(); refresh();
-if(base()) loadMeta(true);
+applyCfg(); buildAll(); refresh(); renderMate();
+if(base()){loadMeta(true); loadHistory(true); if(cfg('mate')) loadRate();}
 </script>
 </body>
 </html>
