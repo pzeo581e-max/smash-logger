@@ -227,8 +227,10 @@ function addLog(id, line){
 
 /* ---- 送信 ---- */
 $('#submit').onclick = async () => {
-  const url = LS.get('url',''), token = LS.get('token','');
+  let url = (LS.get('url','') || '').trim();
+  const token = LS.get('token','');
   if (!url) { toast('⚙ から Worker の URL を設定してください'); return; }
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;   // https:// の付け忘れを補う
   const body = mode === 'match'
     ? { type:'match', memo: $('#match-memo').value.trim(), result: sel.wl, meId: sel.me.id, vsId: sel.vs.id }
     : { type:'memo',  memo: $('#memo-text').value.trim(),  date: $('#memo-date').value };
@@ -240,7 +242,7 @@ $('#submit').onclick = async () => {
       body: JSON.stringify(body)
     });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+    if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status + (r.status === 405 ? '（URLが違うかも）' : '')));
     const now = new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});
     if (mode === 'match') {
       addLog('log-match', `${now} ${sel.me.name} vs ${sel.vs.name} — ${sel.wl}${body.memo ? ' / '+body.memo : ''}`);
