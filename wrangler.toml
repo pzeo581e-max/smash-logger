@@ -18,9 +18,8 @@ workers_dev = true
 directory = "."
 
 [vars]
-# 移行中は旧フロント（GitHub Pages）も動くようにしておく。
-# 新URLに一本化したら、このURLを新しいものへ書き換える。
-ALLOWED_ORIGIN = "https://pzeo581e-max.github.io"
+# フロントとAPIが同一ドメインになったので、ここは自分自身のURLだけ許可する。
+ALLOWED_ORIGIN = "https://smash-logger-app.pzeo581e.workers.dev"
 
 MATCH_DB_ID = "df7dde8c-0b99-466d-aefe-e3779f4b06a1"  # 🎮 スマブラ対戦記録
 MEMO_DB_ID  = "869c23c7-0b13-4a77-9e37-b11b040ebab9"  # 🗒 スマブラメモ

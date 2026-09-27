@@ -23,11 +23,11 @@
 6. 発行された URL（`https://smash-logger-app.<サブドメイン>.workers.dev`）を開く
 7. ⚙タブの「Worker の URL」に**同じURL**を入れて接続テスト
 
-## 移行が終わったら
+## 公開URL
 
-- `wrangler.toml` の `ALLOWED_ORIGIN` を新しい URL に書き換える
-- 旧 Worker `smash-logger` を削除
-- GitHub Pages を無効化
+https://smash-logger-app.pzeo581e.workers.dev
+
+旧構成（GitHub Pages + Worker `smash-logger`）は 2026-09 に廃止。
 
 ## 以降の更新
 
