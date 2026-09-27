@@ -9,6 +9,8 @@
  *                          画像を返すだけなので合言葉は不要
  * GET  /history?limit=100 … 対戦履歴とメモ履歴（端末をまたいで分析するため）
  * GET  /rate?season=第26期 … 期別レートの現在値
+ *
+ * スマメイトの対戦は 対戦種別=スマメイト / レート / レート変動 / 期(リレーション) まで記録する。
  */
 
 const V = '2022-06-28';
@@ -74,6 +76,17 @@ export default {
     const fighterDb = env.FIGHTER_DB_ID || DB.fighter;
     const rateDb    = env.RATE_DB_ID    || DB.rate;
 
+    // 期別レートの行を取得（無ければ作る）
+    const seasonRow = async (season) => {
+      if (!season) return null;
+      const q = await notion(`/databases/${rateDb}/query`,
+        { page_size: 1, filter: { property: '期', title: { equals: season } } });
+      if (q.results?.[0]) return q.results[0];
+      const created = await notion('/pages', { parent: { database_id: rateDb },
+        properties: { '期': { title: [{ text: { content: season } }] } } });
+      return created.object === 'error' ? null : created;
+    };
+
     /* ---------- GET /icon ---------- */
     if (request.method === 'GET' && path.endsWith('/icon')) {
       const id = u.searchParams.get('id');
@@ -138,6 +151,9 @@ export default {
           me: p.properties?.['自分']?.relation?.[0]?.id || null,
           vs: p.properties?.['相手']?.relation?.[0]?.id || null,
           memo: txt(p.properties?.['メモ']),
+          kind: p.properties?.['対戦種別']?.select?.name || null,
+          rate: p.properties?.['レート']?.number ?? null,
+          diff: p.properties?.['レート変動']?.number ?? null,
         })),
         memos: (n.results || []).map(p => ({
           url: p.url, at: p.created_time,
@@ -155,6 +171,7 @@ export default {
         ? { page_size: 1, filter: { property: '期', title: { equals: season } } }
         : { page_size: 20, sorts: [{ timestamp: 'created_time', direction: 'descending' }] });
       return json({ rows: (q.results || []).map(p => ({
+        id: p.id,
         url: p.url,
         season: txt(p.properties?.['期']),
         last: p.properties?.['最終レート']?.number ?? null,
@@ -191,10 +208,37 @@ export default {
       return json({ ok: true, url: res.url, last: b.rate, best, created: !row });
     }
 
-    let payload;
+    let payload, extra = {};
     if (b.type === 'match') {
       if (!b.meId || !b.vsId || !b.result) return json({ error: '自分/相手/勝敗が必要です' }, 400);
       const memo = (b.memo || '').trim();
+      const kind = b.kind || null;
+      const rate = typeof b.rate === 'number' && isFinite(b.rate) ? b.rate : null;
+      let diff = null, row = null;
+
+      if (kind === 'スマメイト' && b.season) {
+        row = await seasonRow(b.season);
+        if (rate != null) {
+          // 直前の「レートが入っている対戦」との差を変動として記録する
+          const prev = await notion(`/databases/${matchDb}/query`, {
+            page_size: 1,
+            filter: { and: [{ property: 'レート', number: { is_not_empty: true } },
+                            { property: '対戦種別', select: { equals: 'スマメイト' } }] },
+            sorts: [{ timestamp: 'created_time', direction: 'descending' }],
+          });
+          const pr = prev.results?.[0]?.properties?.['レート']?.number;
+          if (pr != null) diff = rate - pr;
+          // 期別レートの最終・最高を同時に更新
+          const best = row?.properties?.['最高レート']?.number;
+          await patch(`/pages/${row.id}`, { properties: {
+            '最終レート': { number: rate },
+            '最高レート': { number: best == null ? rate : Math.max(best, rate) },
+            ...(b.record ? { '戦績': { rich_text: [{ text: { content: String(b.record).slice(0, 200) } }] } } : {}),
+          } });
+          extra = { season: b.season, rate, best: best == null ? rate : Math.max(best, rate), diff };
+        }
+      }
+
       payload = {
         parent: { database_id: matchDb },
         properties: {
@@ -202,6 +246,10 @@ export default {
           '勝敗': { select: { name: b.result } },
           '自分': { relation: [{ id: b.meId }] },
           '相手': { relation: [{ id: b.vsId }] },
+          ...(kind ? { '対戦種別': { select: { name: kind } } } : {}),
+          ...(rate != null ? { 'レート': { number: rate } } : {}),
+          ...(diff != null ? { 'レート変動': { number: diff } } : {}),
+          ...(row ? { '期': { relation: [{ id: row.id }] } } : {}),
         },
         children: memo.includes('\n') ? [{ object: 'block', type: 'paragraph',
           paragraph: { rich_text: [{ text: { content: memo.slice(0, 1900) } }] } }] : undefined,
@@ -231,6 +279,6 @@ export default {
       if (!data.properties?.['自分']?.relation?.length) warn.push('「自分」が登録されませんでした（キャラのIDが古い可能性）');
       if (!data.properties?.['相手']?.relation?.length) warn.push('「相手」が登録されませんでした（キャラのIDが古い可能性）');
     }
-    return json({ ok: true, url: data.url, warn });
+    return json({ ok: true, url: data.url, warn, ...extra });
   },
 };

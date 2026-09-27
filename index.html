@@ -126,6 +126,45 @@
     .grid{max-height:42vh}
     #view-side .big{display:none}
   }
+  /* ===== 篝火テーマ（スマメイトモード） ===== */
+  body.mate{--bg:#150a07;--panel:#24120d;--panel2:#341a11;--line:#5a2a16;
+    --tx:#fdece2;--tx2:#d8a98f;--tx3:#a97a5e;--accent:#ff7a18;--win:#e8a417;--lose:#c62828}
+  body.mate::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:radial-gradient(120% 70% at 50% 108%,rgba(255,106,0,.42) 0%,rgba(255,60,0,.16) 38%,transparent 70%),
+               radial-gradient(60% 40% at 8% 100%,rgba(255,170,0,.20),transparent 70%),
+               radial-gradient(60% 40% at 92% 100%,rgba(255,80,0,.18),transparent 70%)}
+  body.mate header,body.mate .wrap,body.mate .sendbar{position:relative;z-index:1}
+  body.mate header{border-bottom-color:#6b3117;
+    background:linear-gradient(90deg,rgba(255,106,0,.20),rgba(255,106,0,.02))}
+  body.mate .card{background:linear-gradient(180deg,rgba(56,26,16,.94),rgba(30,15,10,.94));
+    border-color:#53271a;box-shadow:0 0 0 1px rgba(255,140,40,.05) inset}
+  body.mate .tile{background:#3a1d12}
+  body.mate .tile.sel{border-color:#ff9a3c;background:#6d2f10;box-shadow:0 0 12px rgba(255,140,40,.55)}
+  body.mate .favs .tile{background:#48200f}
+  body.mate .big{background:linear-gradient(180deg,#ff8a1f,#e14a06);
+    box-shadow:0 5px 18px rgba(255,90,0,.35)}
+  body.mate .wl button.w.on{background:#e0920f;border-color:#ffc056}
+  body.mate .wl button.l.on{background:#a81f1f;border-color:#e05a4a}
+  body.mate .rz{background:#1d0f0a}
+  body.mate .tabs{background:#2d150e}
+  body.mate .tabs button.on{background:#5c2a13;color:#ffd9b8}
+  body.mate #card-mate{border-color:#ff8a2b;
+    background:linear-gradient(180deg,rgba(120,46,12,.96),rgba(48,20,12,.96))}
+  body.mate th{background:#24120d}
+  .fire{display:none}
+  body.mate .fire{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;
+    color:#ffd7a8;background:linear-gradient(90deg,#8a3a0d,#c2540f);border:1px solid #ff9a3c;
+    padding:3px 10px;border-radius:99px;box-shadow:0 0 10px rgba(255,140,40,.45)}
+
+  /* スクロールバーを出さない（誤操作防止） */
+  .rz,.grid,.tbl,.col.scroll,#view-cfg{scrollbar-width:none;-ms-overflow-style:none}
+  .rz::-webkit-scrollbar,.grid::-webkit-scrollbar,.tbl::-webkit-scrollbar,
+  .col.scroll::-webkit-scrollbar,#view-cfg::-webkit-scrollbar{width:0;height:0}
+
+  /* スマメイト時は空きスペースを使って、記録とメモを左右の列の下に置く */
+  body.mate #card-log,body.mate #card-memo{flex:0 0 auto}
+  body.mate #log-match,body.mate #match-memo{height:118px}
+
   #view-cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:10px;align-content:start;overflow-y:auto}
 </style>
 </head>
@@ -137,6 +176,7 @@
     <button id="tab-hist">履歴<small>3</small></button>
   </div>
   <span class="spacer"></span>
+  <span class="fire" id="fire-badge">🔥 スマメイト</span>
   <span class="hint" id="top-state" style="margin:0"></span>
   <button class="ib" id="gear" title="設定 (4)">⚙</button>
 </header>
@@ -144,7 +184,7 @@
 <div class="wrap" id="wrap">
 
   <section class="col" id="view-me">
-    <div class="card grow">
+    <div class="card grow" id="card-me">
       <div class="lbl">自分 <span class="pick" id="pick-me">未選択</span>
         <span class="hint">もう一度押すと解除</span>
         <input type="text" class="search" data-for="g-me" placeholder="検索"></div>
@@ -154,9 +194,10 @@
   </section>
 
   <section class="col" id="view-vs">
-    <div class="card grow">
+    <div class="card grow" id="card-vs">
       <div class="lbl">相手（本家の並び順） <span class="pick" id="pick-vs">未選択</span>
         <input type="text" class="search" data-for="g-vs" placeholder="検索"></div>
+      <div id="vs-spacer" style="flex:0 0 auto"></div>
       <div class="grid" id="g-vs"></div>
     </div>
   </section>
@@ -180,12 +221,17 @@
     <div class="card">
       <div class="lbl">勝敗 <span class="hint"><kbd>W</kbd> / <kbd>L</kbd></span></div>
       <div class="wl"><button class="w" id="btn-win">勝ち</button><button class="l" id="btn-lose">負け</button></div>
+      <div class="row" id="row-kind" style="padding-bottom:0"><span class="k">対戦種別</span>
+        <select class="v" id="sel-kind">
+          <option value="オンライン">オンライン</option>
+          <option value="オフライン">オフライン</option>
+          <option value="その他">その他</option></select></div>
     </div>
-    <div class="card">
+    <div class="card" id="card-log">
       <div class="lbl">直近の記録 <span class="hint">下端をドラッグで伸縮</span></div>
       <div class="rz" id="log-match">読み込み中…</div>
     </div>
-    <div class="card">
+    <div class="card" id="card-memo">
       <div class="lbl">メモ（対戦記録のタイトル） <span class="hint">下端をドラッグで伸縮</span></div>
       <textarea id="match-memo" placeholder="例：着地狩りされ続けた。下B多め"></textarea>
     </div>
@@ -213,9 +259,17 @@
         <select id="hist-scope" style="width:auto;padding:4px 8px;font-size:12px;margin-left:auto">
           <option value="100">直近100戦</option><option value="50">直近50戦</option>
           <option value="20">直近20戦</option><option value="10">直近10戦</option></select>
+        <select id="hist-kind" style="width:auto;padding:4px 8px;font-size:12px">
+          <option value="">すべて</option><option value="スマメイト">スマメイト</option>
+          <option value="オンライン">オンライン</option><option value="オフライン">オフライン</option></select>
         <button class="ib" id="hist-reload" title="Notionから再取得">↺</button></div>
       <div class="kpi" id="kpi"></div>
     </div>
+    <div class="card" id="card-trend">
+      <div class="lbl">レート推移（スマメイト）</div>
+      <div id="trend"></div>
+    </div>
+    <div class="card"><div class="lbl">対戦種別ごとの比較</div><div class="tbl" id="t-kind"></div></div>
     <div class="card grow"><div class="lbl">自分のキャラ別</div><div class="tbl" id="t-me"></div></div>
     <div class="card grow"><div class="lbl">相手キャラ別（勝率の低い順＝苦手）</div><div class="tbl" id="t-vs"></div></div>
   </section>
@@ -280,7 +334,7 @@
         <div class="note">直近の対戦から使用回数トップ5</div></span><button class="sw" id="sw-favs"></button></div>
       <div class="row"><span class="k">送信後も自分のキャラを保持
         <div class="note">連戦を素早く記録できます</div></span><button class="sw" id="sw-keep"></button></div>
-      <div class="note" id="fit-state" style="margin-top:10px"></div>
+      <ul class="note" id="fit-state" style="margin:10px 0 0;padding-left:1.1em;overflow-wrap:anywhere"></ul>
     </div>
 
     <div class="card">
@@ -344,19 +398,38 @@ function applyCfg(){
   $('#sel-cols').value=String(c||(innerWidth<1000?6:8));
   $('#sel-size').value=String(cfg('size'));
   $('#favs').classList.toggle('hide',!cfg('favs'));
-  $('#card-mate').classList.toggle('hide',!cfg('mate'));
-  fitState();
+  const mate=!!cfg('mate');
+  document.body.classList.toggle('mate',mate);
+  $('#card-mate').classList.toggle('hide',!mate);
+  $('#row-kind').classList.toggle('hide',mate);
+  relayout(); alignTops(); fitState();
+}
+// スマメイト時：記録とメモをキャラ欄の下の空きスペースへ移す
+function relayout(){
+  const mate=!!cfg('mate'), log=$('#card-log'), memo=$('#card-memo'), side=$('#view-side');
+  if(mate){ $('#view-me').appendChild(log); $('#view-vs').appendChild(memo); }
+  else{ side.appendChild(log); side.appendChild(memo); side.appendChild($('#submit-side')); }
+}
+// 自分と相手の枠の上端（＝タイルの開始位置）をそろえる
+function alignTops(){
+  const f=$('#favs'), sp=$('#vs-spacer'); if(!sp) return;
+  const h=(cfg('favs')&&!f.classList.contains('hide'))?f.getBoundingClientRect().height+9:0;
+  sp.style.height=h?h+'px':'0px';
 }
 function fitState(){
-  const t=$('#g-vs .tile')||$('#g-me .tile'); if(!t) return;
-  const w=Math.round(t.getBoundingClientRect().width), ic=cfg('size');
-  const chars=Math.max(0,Math.floor((w-6)/9.6));
+  const t=$('#g-vs .tile')||$('#g-me .tile');
+  let w=t?Math.round(t.getBoundingClientRect().width):0;
+  if(w>0) LS.set('tileW',w); else w=LS.get('tileW',0);   // 設定タブではタイルが非表示で測れないため前回値を使う
+  const ic=cfg('size'), chars=w?Math.max(0,Math.floor((w-6)/9.6)):0;
   const longest=FLIST.reduce((a,b)=>a.name.length>=b.name.length?a:b);
-  $('#fit-state').innerHTML=
-    `いまの設定：タイル幅 <b>${w}px</b> ／ アイコン <b>${ic}px</b> ／ 名前は約 <b>${chars}文字</b>まで表示`
-    +`<br>${chars>=longest.name.length?'すべてのキャラ名が省略されずに出ています。'
-      :`長い名前（最長${longest.name.length}文字「${longest.name}」）は「…」で省略されます。`}`
-    +`<br><b>アイコンを大きくしても名前は消えません</b>（タイルが縦に伸びるだけ）。名前が省略されるのは列数を増やしたときです。`;
+  $('#fit-state').innerHTML=[
+    w?`タイル幅 <b>${w}px</b>／アイコン <b>${ic}px</b>／名前は約 <b>${chars}文字</b>まで表示`
+      :`アイコン <b>${ic}px</b>（タイル幅は対戦タブを開くと測定します）`,
+    chars>=longest.name.length&&w?'すべてのキャラ名が省略されずに出ています'
+      :`最長は${longest.name.length}文字「${longest.name}」。これが入らないと「…」で省略されます`,
+    '<b>アイコンを大きくしても名前は消えません</b>（タイルが縦に伸びるだけ）',
+    '名前が省略されるのは<b>列数を増やしたとき</b>です',
+  ].map(x=>`<li style="margin-bottom:3px">${x}</li>`).join('');
 }
 $('#sw-name').onclick=()=>setCfg('name',!cfg('name'));
 $('#sw-favs').onclick=()=>{setCfg('favs',!cfg('favs'));buildAll()};
@@ -371,7 +444,7 @@ $('#sw-mate').onclick=()=>{
   setCfg('mate',on); if(on) loadRate(); renderMate();
   toast(on?'スマメイトモード ON':'スマメイトモード OFF');
 };
-addEventListener('resize',fitState);
+addEventListener('resize',()=>{fitState();alignTops()});
 
 /* ================= タイル ================= */
 function iconSrc(id){
@@ -404,7 +477,7 @@ function buildAll(){
   const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([id])=>BY_ID[id]).filter(Boolean);
   if(top.length) top.forEach(f=>fv.appendChild(tileEl(f,'me',true)));
   else fv.innerHTML='<div class="note" style="grid-column:1/-1">⚙→「アイコン等を更新」でよく使うキャラを上段に表示します</div>';
-  paintSel('me'); paintSel('vs'); fitState();
+  paintSel('me'); paintSel('vs'); requestAnimationFrame(()=>{alignTops();fitState()});
 }
 $$('.search').forEach(inp=>{inp.oninput=()=>{const q=inp.value.trim();
   $$('#'+inp.dataset.for+' .tile').forEach(t=>t.style.visibility=!q||t.dataset.name.includes(q)?'':'hidden')}});
@@ -439,6 +512,8 @@ $('#cfg-url').value=LS.get('url','');
 $('#cfg-token').value=LS.get('token','');
 $('#cfg-url').oninput=e=>LS.set('url',e.target.value.trim());
 $('#cfg-token').oninput=e=>LS.set('token',e.target.value);
+$('#sel-kind').value=LS.get('kind','オンライン');
+$('#sel-kind').onchange=e=>LS.set('kind',e.target.value);
 $('#memo-date').value=today();
 $('#match-memo').oninput=refresh;
 $('#memo-text').oninput=()=>{const n=$('#memo-text').value.trim();
@@ -497,14 +572,49 @@ async function loadHistory(quiet){
 }
 $('#hist-reload').onclick=()=>loadHistory(false);
 $('#hist-scope').onchange=renderHistory;
+$('#hist-kind').onchange=renderHistory;
 $('#h-match').onclick=()=>{histTab='match';renderHistory()};
 $('#h-memo').onclick =()=>{histTab='memo';renderHistory()};
 
+function sparkline(pts){
+  if(pts.length<2) return '<div class="note">レートの記録が2件以上たまると推移が表示されます</div>';
+  const W=600,H=110,P=6, xs=pts.map((_,i)=>i), ys=pts.map(p=>p.rate);
+  const mn=Math.min(...ys), mx=Math.max(...ys), sp=(mx-mn)||1;
+  const X=i=>P+i*(W-2*P)/(xs.length-1), Y=v=>H-P-((v-mn)/sp)*(H-2*P);
+  const d=pts.map((p,i)=>`${i?'L':'M'}${X(i).toFixed(1)},${Y(p.rate).toFixed(1)}`).join(' ');
+  const up=pts[pts.length-1].rate>=pts[0].rate;
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:110px;display:block">
+    <path d="${d} L${X(pts.length-1).toFixed(1)},${H-P} L${X(0).toFixed(1)},${H-P} Z"
+      fill="${up?'rgba(255,138,31,.18)':'rgba(198,40,40,.18)'}"/>
+    <path d="${d}" fill="none" stroke="${up?'#ff8a1f':'#e05a4a'}" stroke-width="2.5"/>
+    ${pts.map((p,i)=>`<circle cx="${X(i).toFixed(1)}" cy="${Y(p.rate).toFixed(1)}" r="2.6" fill="#ffd7a8"/>`).join('')}
+  </svg>
+  <div class="note">最小 ${mn} / 最大 ${mx} / 最新 <b>${pts[pts.length-1].rate}</b>（${pts.length}件）</div>`;
+}
 function renderHistory(){
-  const ms=HIST.matches, n=+$('#hist-scope').value, cut=ms.slice(0,n);
-  $('#log-match').innerHTML = ms.length
-    ? ms.slice(0,40).map(m=>`${hhmm(m.at)} ${fname(m.me)} vs ${fname(m.vs)} `
+  const kf=$('#hist-kind').value;
+  const ms=HIST.matches.filter(m=>!kf||m.kind===kf);
+  const n=+$('#hist-scope').value, cut=ms.slice(0,n);
+
+  // レート推移（古い順）
+  const pts=HIST.matches.filter(m=>m.rate!=null).slice().reverse().map(m=>({rate:m.rate,at:m.at}));
+  $('#trend').innerHTML=sparkline(pts);
+
+  // 種別ごとの比較
+  const k={}; for(const m of HIST.matches){const key=m.kind||'未分類';(k[key]??={w:0,l:0});
+    if(m.result==='勝ち')k[key].w++; else if(m.result==='負け')k[key].l++}
+  $('#t-kind').innerHTML=Object.keys(k).length
+    ? '<table><tr><th>種別</th><th class="r">戦</th><th class="r">勝率</th><th style="width:30%">　</th></tr>'
+      +Object.entries(k).sort((a,b)=>(b[1].w+b[1].l)-(a[1].w+a[1].l)).map(([name,v])=>{
+        const t=v.w+v.l, r=t?v.w/t:0;
+        return `<tr><td>${name}</td><td class="r">${t}</td>`
+          +`<td class="r">${Math.round(r*100)}%<span style="color:var(--tx3)"> ${v.w}-${v.l}</span></td>`
+          +`<td><div class="bar"><i style="width:${r*100}%"></i></div></td></tr>`}).join('')+'</table>'
+    : '<div class="note">データがありません</div>';
+  $('#log-match').innerHTML = HIST.matches.length
+    ? HIST.matches.slice(0,40).map(m=>`${hhmm(m.at)} ${fname(m.me)} vs ${fname(m.vs)} `
       +`<span class="${m.result==='勝ち'?'w':'l'}">${m.result||'–'}</span>`
+      +(m.diff!=null?` <span style="color:${m.diff>=0?'#e8a417':'#e9736e'}">${m.diff>=0?'+':''}${m.diff}</span>`:'')
       +(m.memo&&m.memo!=='（メモなし）'?' / '+m.memo:'')).join('<br>') : 'まだありません';
   $('#log-memo').innerHTML = HIST.memos.length
     ? HIST.memos.map(x=>`${x.date||hhmm(x.at)} ${x.memo}`
@@ -540,11 +650,12 @@ function renderHistory(){
   $('#h-match').classList.toggle('on',histTab==='match');
   $('#h-memo').classList.toggle('on',histTab==='memo');
   $('#hist-list').innerHTML = histTab==='match'
-    ? (ms.length?'<table><tr><th>日時</th><th>自分</th><th>相手</th><th>結果</th><th>メモ</th></tr>'
+    ? (ms.length?'<table><tr><th>日時</th><th>自分</th><th>相手</th><th>結果</th><th class="r">レート</th><th>メモ</th></tr>'
       +ms.map(m=>`<tr><td style="white-space:nowrap;color:var(--tx2)">${hhmm(m.at)}</td>`
       +`<td style="white-space:nowrap">${icTag(m.me)}${fname(m.me)}</td>`
       +`<td style="white-space:nowrap">${icTag(m.vs)}${fname(m.vs)}</td>`
       +`<td style="color:${m.result==='勝ち'?'#63c98d':'#e9736e'};white-space:nowrap">${m.result||'–'}</td>`
+      +`<td class="r">${m.rate!=null?m.rate:''}${m.diff!=null?` <span style="color:${m.diff>=0?'#e8a417':'#e9736e'}">${m.diff>=0?'+':''}${m.diff}</span>`:''}</td>`
       +`<td><a href="${m.url}" target="_blank" rel="noopener" style="color:var(--tx)">`
       +`${m.memo==='（メモなし）'?'<span style="color:var(--tx3)">—</span>':m.memo}</a></td></tr>`).join('')+'</table>'
       :'<div class="note">まだありません</div>')
@@ -560,6 +671,11 @@ $('#mate-season').value=LS.get('season','');
 $('#mate-season').oninput=e=>{LS.set('season',e.target.value.trim());renderMate()};
 $('#mate-rate').oninput=renderMate;
 function rateLog(){return LS.get('rateLog',[])}
+function seasonRecord(){
+  const s=LS.get('season',''), m=(LS.get('mateWL',{})[s])||{w:0,l:0};
+  const add=sel.wl==='勝ち'?1:0;
+  return `${m.w+add}勝${m.l+(add?0:1)}敗`;
+}
 function renderMate(){
   if(!cfg('mate')) return;
   const season=LS.get('season',''), log=rateLog().filter(x=>x.season===season);
@@ -646,7 +762,11 @@ async function send(){
   const body = mode==='memo'
     ? {type:'memo', memo, date:$('#memo-date').value,
        tags:$('#memo-tags').value.split(',').map(s=>s.trim()).filter(Boolean)}
-    : {type:'match', memo:$('#match-memo').value.trim(), result:sel.wl, meId:sel.me.id, vsId:sel.vs.id};
+    : {type:'match', memo:$('#match-memo').value.trim(), result:sel.wl, meId:sel.me.id, vsId:sel.vs.id,
+       ...(cfg('mate')
+         ? {kind:'スマメイト', season:LS.get('season',''),
+            rate:parseInt($('#mate-rate').value,10)||null, record:seasonRecord()}
+         : {kind:$('#sel-kind').value})};
   const btns=['#submit','#submit-side','#submit-memo'].map($).filter(Boolean);
   const old=btns.map(b=>b.textContent);
   btns.forEach(b=>{b.disabled=true;b.textContent='送信中…'});
@@ -661,7 +781,10 @@ async function send(){
       if(!cfg('keep')){sel.me=null;LS.set('lastMe',null);paintSel('me')}
       sel.vs=null; paintSel('vs'); paintWL();
     }
-    toast(r.warn?.length?'⚠ 追加しましたが：\n'+r.warn.join('\n'):'✅ Notionに追加しました');
+    if(r.warn?.length) toast('⚠ 追加しましたが：\n'+r.warn.join('\n'));
+    else if(r.rate!=null) toast(`✅ 記録しました\nレート ${r.rate}`
+      +(r.diff!=null?` (${r.diff>=0?'+':''}${r.diff})`:'')+` ／ 今期最高 ${r.best}`);
+    else toast('✅ Notionに追加しました');
     loadHistory(true);
   }catch(e){toast('⚠ 失敗：'+e.message)}
   finally{btns.forEach((b,i)=>b.textContent=old[i]);refresh()}
