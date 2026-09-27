@@ -125,23 +125,34 @@ export default {
     let payload;
     if (b.type === 'match') {
       if (!b.meId || !b.vsId || !b.result) return json({ error: '自分/相手/勝敗が必要です' }, 400);
+      const memo = (b.memo || '').trim();
       payload = {
         parent: { database_id: matchDb },
         properties: {
-          'メモ': { title: [{ text: { content: (b.memo || '（メモなし）').slice(0, 2000) } }] },
+          'メモ': { title: [{ text: { content: (memo.split('\n')[0] || '（メモなし）').slice(0, 2000) } }] },
           '勝敗': { select: { name: b.result } },
           '自分': { relation: [{ id: b.meId }] },
           '相手': { relation: [{ id: b.vsId }] },
         },
+        children: memo.includes('\n') ? [{
+          object: 'block', type: 'paragraph',
+          paragraph: { rich_text: [{ text: { content: memo.slice(0, 1900) } }] },
+        }] : undefined,
       };
     } else if (b.type === 'memo') {
-      if (!b.memo) return json({ error: 'メモが空です' }, 400);
+      const memo = (b.memo || '').trim();
+      if (!memo) return json({ error: 'メモが空です' }, 400);
       payload = {
         parent: { database_id: memoDb },
         properties: {
-          'メモ': { title: [{ text: { content: b.memo.slice(0, 2000) } }] },
+          'メモ': { title: [{ text: { content: memo.split('\n')[0].slice(0, 2000) } }] },
           '日付': { date: { start: b.date || new Date().toISOString().slice(0, 10) } },
+          ...(b.tags?.length ? { 'タグ': { multi_select: b.tags.slice(0, 10).map(name => ({ name })) } } : {}),
         },
+        children: memo.includes('\n') ? [{
+          object: 'block', type: 'paragraph',
+          paragraph: { rich_text: [{ text: { content: memo.slice(0, 1900) } }] },
+        }] : undefined,
       };
     } else {
       return json({ error: 'unknown type' }, 400);
