@@ -10,6 +10,9 @@ name = "smash-logger-app"
 main = "worker/src/index.js"
 compatibility_date = "2025-01-01"
 
+# xxx.workers.dev のURLを有効にする
+workers_dev = true
+
 # リポジトリのルートをそのまま公開する。除外は .assetsignore を見る。
 [assets]
 directory = "."
