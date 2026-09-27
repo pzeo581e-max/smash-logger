@@ -188,7 +188,7 @@ function tileEl(f,key,big){
   const b=document.createElement('div');
   b.className='tile'+(icons[f.id]?'':' noicon');
   b.dataset.id=f.id; b.dataset.name=f.name; b.title=f.no+'. '+f.name;
-  b.innerHTML=(icons[f.id]?`<img src="${icons[f.id]}" alt="" loading="lazy" onerror="this.remove();this.parentNode&&this.parentNode.classList.add('noicon')">`:'')
+  b.innerHTML=(icons[f.id]?`<img src="${iconSrc(f.id)}" alt="" loading="lazy" onerror="this.remove();this.parentNode&&this.parentNode.classList.add('noicon')">`:'')
     +`<span class="nm">${f.name}</span>`
     +(big&&counts[f.id]?`<span class="cnt">${counts[f.id]}戦</span>`:'');
   b.onclick=()=>pick(key,f);
@@ -278,6 +278,11 @@ function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');se
 function addLog(id,line){const el=$('#'+id);if(el.textContent==='まだありません')el.textContent='';
   el.insertAdjacentHTML('afterbegin',line+'<br>');}
 
+function iconSrc(id){
+  const b=base(); if(!b) return '';
+  return b+'/icon?id='+id;
+}
+
 /* ---------- 通信 ---------- */
 function base(){
   let u=(LS.get('url','')||'').trim();
@@ -303,7 +308,10 @@ async function loadMeta(quiet){
     icons=j.icons||{}; counts=j.counts||{};
     LS.set('icons',icons); LS.set('counts',counts);
     buildAll();
-    $('#meta-state').textContent=`アイコン ${Object.keys(icons).length} 件 / 直近 ${j.sampled} 戦を集計`;
+    $('#meta-state').textContent=
+      `ファイター ${j.fighters} 体中 アイコンあり ${Object.keys(icons).length} 体`
+      + (j.noIcon&&j.noIcon.length?`／未設定：${j.noIcon.join('、')}`:'')
+      + ` ／ 直近 ${j.sampled} 戦を集計`;
     if(!quiet) toast(`アイコン${Object.keys(icons).length}件を読み込みました`);
   }catch(e){ if(!quiet) toast('⚠ 取得失敗：'+e.message); }
 }
